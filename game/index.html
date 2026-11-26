@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Skyward Isles — Flight Game</title>
+<style>
+  html,body{margin:0;height:100%;overflow:hidden;background:#87bfe8;font-family:Arial,Helvetica,sans-serif}
+  #scene{position:fixed;inset:0;width:100%;height:100%;display:block}
+  .hud{position:fixed;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,.65);z-index:5;pointer-events:none}
+  #hudTop{top:14px;left:16px;right:16px;display:flex;justify-content:space-between;align-items:flex-start}
+  .panel{background:rgba(8,28,48,.62);border:2px solid rgba(255,255,255,.55);border-radius:12px;padding:10px 14px}
+  .big{font-size:28px;font-weight:800;letter-spacing:.5px}
+  .label{font-size:11px;text-transform:uppercase;letter-spacing:1.6px;opacity:.85}
+  .value{font-size:22px;font-weight:800}
+  #missionBox{text-align:center;max-width:520px}
+  #missionTitle{font-size:20px;font-weight:800;color:#ffe27a}
+  #missionText{font-size:15px;margin-top:3px}
+  #hudBottom{bottom:16px;left:16px;right:16px;display:flex;justify-content:space-between;align-items:flex-end}
+  .gaugeRow{display:flex;gap:10px}
+  .gauge{width:108px;text-align:center}
+  .bar{height:12px;background:rgba(255,255,255,.22);border-radius:99px;overflow:hidden;margin-top:5px}
+  .fill{height:100%;background:#57e389}
+  #fuelFill{background:#ffc857}#damageFill{background:#ff6b6b}
+  #centerMsg{top:42%;left:0;right:0;text-align:center;font-size:34px;font-weight:900;color:#ffe27a}
+  #menu{position:fixed;inset:0;background:linear-gradient(180deg,rgba(10,40,75,.25),rgba(5,20,40,.72));z-index:20;display:flex;align-items:center;justify-content:center;color:#fff}
+  #menuCard{background:rgba(7,28,52,.88);border:2px solid rgba(255,255,255,.5);border-radius:20px;padding:28px 34px;max-width:680px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.45)}
+  #menuCard h1{margin:0 0 6px;font-size:44px;letter-spacing:1px;color:#ffe27a}
+  #menuCard p{font-size:16px;line-height:1.45}
+  .missionBtn{display:block;width:100%;margin:9px 0;padding:12px;border:0;border-radius:12px;background:#1d7fd1;color:#fff;font-size:17px;font-weight:800;cursor:pointer}
+  .missionBtn:hover{background:#35a0ee}
+  .keys{font-size:13px;opacity:.92;line-height:1.6}
+  #cockpitInstruments{bottom:118px;left:50%;transform:translateX(-50%);display:none;gap:12px}
+  .dial{width:92px;height:92px;border-radius:50%;background:radial-gradient(circle,#173a5c 58%,#0a1f35 60%,#d9e6f2 63%,#223 100%);border:3px solid #e8f1f8;position:relative;text-align:center}
+  .dial .label{position:absolute;top:10px;left:0;right:0;color:#cfe8ff}
+  .dial .value{position:absolute;bottom:12px;left:0;right:0;font-size:18px}
+  .needle{position:absolute;left:50%;top:50%;width:4px;height:36px;background:#ffcf4d;transform-origin:50% 0;border-radius:4px}
+</style>
+</head>
+<body>
+<canvas id="scene" aria-label="Skyward Isles flight game"></canvas>
+
+<div class="hud" id="hudTop">
+  <div class="panel"><div class="label">Skyward Isles</div><div class="big" id="speedReadout">IAS 0 kt</div><div id="throttleReadout">Throttle 0%</div></div>
+  <div class="panel" id="missionBox"><div id="missionTitle">RING RUNNER</div><div id="missionText">Fly through the golden rings</div><div id="scoreReadout">Score 0 &nbsp; Rings 0/6</div></div>
+  <div class="panel" style="text-align:right"><div class="label">Altitude / Heading</div><div class="big" id="altReadout">ALT 0 ft</div><div id="headingReadout">HDG 000° &nbsp; VS 0 fpm</div></div>
+</div>
+
+<div class="hud" id="cockpitInstruments">
+  <div class="dial"><div class="label">Airspeed</div><div class="needle" id="speedNeedle"></div><div class="value" id="dialSpeed">0</div></div>
+  <div class="dial"><div class="label">Altitude</div><div class="needle" id="altNeedle"></div><div class="value" id="dialAlt">0</div></div>
+  <div class="dial"><div class="label">Heading</div><div class="needle" id="hdgNeedle"></div><div class="value" id="dialHdg">000</div></div>
+</div>
+
+<div class="hud" id="hudBottom">
+  <div class="panel gaugeRow">
+    <div class="gauge"><div class="label">Fuel</div><div class="value" id="fuelText">100%</div><div class="bar"><div class="fill" id="fuelFill" style="width:100%"></div></div></div>
+    <div class="gauge"><div class="label">Hull</div><div class="value" id="damageText">100%</div><div class="bar"><div class="fill" id="damageFill" style="width:100%"></div></div></div>
+  </div>
+  <div class="panel"><div class="label">Controls</div><div>W/S throttle &nbsp; Arrows pitch/roll &nbsp; A/D rudder &nbsp; C camera &nbsp; Space brake</div></div>
+  <div class="panel" style="text-align:right"><div class="label">View</div><div class="value" id="viewReadout">CHASE</div><div id="windReadout">Wind calm</div></div>
+</div>
+
+<div class="hud" id="centerMsg"></div>
+
+<div id="menu">
+  <div id="menuCard">
+    <h1>SKYWARD ISLES</h1>
+    <p>An original island flight game. Thread golden rings, run cargo between two airstrips, or grease a landing inside the touchdown zone. Watch fuel and hull — hard ground and greedy throttle end sorties.</p>
+    <button class="missionBtn" data-mission="rings">✈  MISSION 1 — RING RUNNER: 6 golden rings over the bay</button>
+    <button class="missionBtn" data-mission="cargo">✈  MISSION 2 — CARGO RUN: North Field to South Strip, timed</button>
+    <button class="missionBtn" data-mission="landing">✈  MISSION 3 — PRECISION LANDING: touch down gently in the zone</button>
+    <p class="keys">W/S throttle · ↑/↓ pitch · ←/→ roll · A/D rudder · C chase/cockpit · Space wheel brake · P pause · Mouse drag to look<br>Best times are saved on this device.</p>
+  </div>
+</div>
+
+<script src="./vendor/three.min.js"></script>
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>
